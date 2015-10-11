@@ -37,12 +37,12 @@ composer require joshcam/mysqli-database-class:dev-master
 ### Initialization
 Simple initialization with utf8 charset set by default:
 ```php
-$db = new MysqliDb ('host', 'username', 'password', 'databaseName');
+$DBLIB = new MysqliDb ('host', 'username', 'password', 'databaseName');
 ```
 
 Advanced initialization:
 ```php
-$db = new MysqliDb (Array (
+$DBLIB = new MysqliDb (Array (
                 'host' => 'host',
                 'username' => 'username', 
                 'password' => 'password',
@@ -57,24 +57,24 @@ If no charset should be set charset, set it to null
 Also it is possible to reuse already connected mysqli object:
 ```php
 $mysqli = new mysqli ('host', 'username', 'password', 'databaseName');
-$db = new MysqliDb ($mysqli);
+$DBLIB = new MysqliDb ($mysqli);
 ```
 
 If no table prefix were set during object creation its possible to set it later with a separate call:
 ```php
-$db->setPrefix ('my_');
+$DBLIB->setPrefix ('my_');
 ```
 
 If you need to get already created mysqliDb object from another class or function use
 ```php
     function init () {
         // db staying private here
-        $db = new MysqliDb ('host', 'username', 'password', 'databaseName');
+        $DBLIB = new MysqliDb ('host', 'username', 'password', 'databaseName');
     }
     ...
     function myfunc () {
         // obtain db object created in init  ()
-        $db = MysqliDb::getInstance();
+        $DBLIB = MysqliDb::getInstance();
         ...
     }
 ```
@@ -90,7 +90,7 @@ $data = Array ("login" => "admin",
                "firstName" => "John",
                "lastName" => 'Doe'
 );
-$id = $db->insert ('users', $data);
+$id = $DBLIB->insert ('users', $data);
 if($id)
     echo 'user was created. Id=' . $id;
 ```
@@ -102,20 +102,20 @@ $data = Array (
     'active' => true,
 	'firstName' => 'John',
 	'lastName' => 'Doe',
-	'password' => $db->func('SHA1(?)',Array ("secretpassword+salt")),
+	'password' => $DBLIB->func('SHA1(?)',Array ("secretpassword+salt")),
 	// password = SHA1('secretpassword+salt')
-	'createdAt' => $db->now(),
+	'createdAt' => $DBLIB->now(),
 	// createdAt = NOW()
-	'expires' => $db->now('+1Y')
+	'expires' => $DBLIB->now('+1Y')
 	// expires = NOW() + interval 1 year
 	// Supported intervals [s]econd, [m]inute, [h]hour, [d]day, [M]onth, [Y]ear
 );
 
-$id = $db->insert ('users', $data);
+$id = $DBLIB->insert ('users', $data);
 if ($id)
     echo 'user was created. Id=' . $id;
 else
-    echo 'insert failed: ' . $db->getLastError();
+    echo 'insert failed: ' . $DBLIB->getLastError();
 ```
 
 Insert with on duplicate key update
@@ -123,13 +123,13 @@ Insert with on duplicate key update
 $data = Array ("login" => "admin",
                "firstName" => "John",
                "lastName" => 'Doe',
-               "createdAt" => $db->now(),
-               "updatedAt" => $db->now(),
+               "createdAt" => $DBLIB->now(),
+               "updatedAt" => $DBLIB->now(),
 );
 $updateColumns = Array ("updateAt");
 $lastInsertId = "id";
-$db->onDuplicate($updateColumns, $lastInsertId);
-$id = $db->insert ('users', $data);
+$DBLIB->onDuplicate($updateColumns, $lastInsertId);
+$id = $DBLIB->insert ('users', $data);
 ```
 
 ### Replace Query
@@ -140,31 +140,31 @@ $id = $db->insert ('users', $data);
 $data = Array (
 	'firstName' => 'Bobby',
 	'lastName' => 'Tables',
-	'editCount' => $db->inc(2),
+	'editCount' => $DBLIB->inc(2),
 	// editCount = editCount + 2;
-	'active' => $db->not()
+	'active' => $DBLIB->not()
 	// active = !active;
 );
-$db->where ('id', 1);
-if ($db->update ('users', $data))
-    echo $db->count . ' records were updated';
+$DBLIB->where ('id', 1);
+if ($DBLIB->update ('users', $data))
+    echo $DBLIB->count . ' records were updated';
 else
-    echo 'update failed: ' . $db->getLastError();
+    echo 'update failed: ' . $DBLIB->getLastError();
 ```
 
 ### Select Query
 After any select/get function calls amount or returned rows is stored in $count variable
 ```php
-$users = $db->get('users'); //contains an Array of all users 
-$users = $db->get('users', 10); //contains an Array 10 users
+$users = $DBLIB->get('users'); //contains an Array of all users 
+$users = $DBLIB->get('users', 10); //contains an Array 10 users
 ```
 
 or select with custom columns set. Functions also could be used
 
 ```php
 $cols = Array ("id", "name", "email");
-$users = $db->get ("users", null, $cols);
-if ($db->count > 0)
+$users = $DBLIB->get ("users", null, $cols);
+if ($DBLIB->count > 0)
     foreach ($users as $user) { 
         print_r ($user);
     }
@@ -173,26 +173,26 @@ if ($db->count > 0)
 or select just one row
 
 ```php
-$db->where ("id", 1);
-$user = $db->getOne ("users");
+$DBLIB->where ("id", 1);
+$user = $DBLIB->getOne ("users");
 echo $user['id'];
 
-$stats = $db->getOne ("users", "sum(id), count(*) as cnt");
+$stats = $DBLIB->getOne ("users", "sum(id), count(*) as cnt");
 echo "total ".$stats['cnt']. "users found";
 ```
 
 or select one column value or function result
 
 ```php
-$count = $db->getValue ("users", "count(*)");
+$count = $DBLIB->getValue ("users", "count(*)");
 echo "{$count} users found";
 ```
 
 select one column value or function result from multiple rows:
 ``php
-$logins = $db->getValue ("users", "login", null);
+$logins = $DBLIB->getValue ("users", "login", null);
 // select login from users
-$logins = $db->getValue ("users", "login", 5);
+$logins = $DBLIB->getValue ("users", "login", 5);
 // select login from users limit 5
 foreach ($logins as $login)
     echo $login;
@@ -203,18 +203,18 @@ foreach ($logins as $login)
 MysqliDb can return result in 3 different formats: Array of Array, Array of Objects and a Json string. To select a return type use ArrayBuilder(), ObjectBuilder() and JsonBuilder() methods. Note that ArrayBuilder() is a default return type
 ```php
 // Array return type
-$= $db->getOne("users");
+$= $DBLIB->getOne("users");
 echo $u['login'];
 // Object return type
-$u = $db->ObjectBuilder()->getOne("users");
+$u = $DBLIB->ObjectBuilder()->getOne("users");
 echo $u->login;
 // Json return type
-$json = $db->JsonBuilder()->getOne("users");
+$json = $DBLIB->JsonBuilder()->getOne("users");
 ```
 
 ### Running raw SQL queries
 ```php
-$users = $db->rawQuery('SELECT * from users where id >= ?', Array (10));
+$users = $DBLIB->rawQuery('SELECT * from users where id >= ?', Array (10));
 foreach ($users as $user) {
     print_r ($user);
 }
@@ -223,21 +223,21 @@ To avoid long if checks there are couple helper functions to work with raw query
 
 Get 1 row of results:
 ```php
-$user = $db->rawQueryOne ('select * from users where id=?', Array(10));
+$user = $DBLIB->rawQueryOne ('select * from users where id=?', Array(10));
 echo $user['login'];
 // Object return type
-$user = $db->ObjectBuilder()->rawQueryOne ('select * from users where id=?', Array(10));
+$user = $DBLIB->ObjectBuilder()->rawQueryOne ('select * from users where id=?', Array(10));
 echo $user->login;
 ```
 Get 1 column value as a string:
 ```php
-$password = $db->rawQueryValue ('select password from users where id=? limit 1', Array(10));
+$password = $DBLIB->rawQueryValue ('select password from users where id=? limit 1', Array(10));
 echo "Password is {$password}";
 NOTE: for a rawQueryValue() to return string instead of an array 'limit 1' should be added to the end of the query.
 ```
 Get 1 column value from multiple rows:
 ```php
-$logins = $db->rawQueryValue ('select login from users limit 10');
+$logins = $DBLIB->rawQueryValue ('select login from users limit 10');
 foreach ($logins as $login)
     echo $login;
 ```
@@ -245,7 +245,7 @@ foreach ($logins as $login)
 More advanced examples:
 ```php
 $params = Array(1, 'admin');
-$users = $db->rawQuery("SELECT id, firstName, lastName FROM users WHERE id = ? AND login = ?", $params);
+$users = $DBLIB->rawQuery("SELECT id, firstName, lastName FROM users WHERE id = ? AND login = ?", $params);
 print_r($users); // contains Array of returned rows
 
 // will handle any SQL query
@@ -259,7 +259,7 @@ $q = "(
         WHERE a = ? AND B = ?
         ORDER BY a LIMIT ?
 )";
-$resutls = $db->rawQuery ($q, $params);
+$resutls = $DBLIB->rawQuery ($q, $params);
 print_r ($results); // contains Array of returned rows
 ```
 
@@ -270,74 +270,74 @@ WARNING: In order to use column to column comparisons only raw where conditions 
 
 Regular == operator with variables:
 ```php
-$db->where ('id', 1);
-$db->where ('login', 'admin');
-$results = $db->get ('users');
+$DBLIB->where ('id', 1);
+$DBLIB->where ('login', 'admin');
+$results = $DBLIB->get ('users');
 // Gives: SELECT * FROM users WHERE id=1 AND login='admin';
 ```
 
 Regular == operator with column to column comparison:
 ```php
 // WRONG
-$db->where ('lastLogin', 'createdAt');
+$DBLIB->where ('lastLogin', 'createdAt');
 // CORRECT
-$db->where ('lastLogin = createdAt');
-$results = $db->get ('users');
+$DBLIB->where ('lastLogin = createdAt');
+$results = $DBLIB->get ('users');
 // Gives: SELECT * FROM users WHERE lastLogin = createdAt;
 ```
 
 ```php
-$db->where ('id', 50, ">=");
-// or $db->where ('id', Array ('>=' => 50));
-$results = $db->get ('users');
+$DBLIB->where ('id', 50, ">=");
+// or $DBLIB->where ('id', Array ('>=' => 50));
+$results = $DBLIB->get ('users');
 // Gives: SELECT * FROM users WHERE id >= 50;
 ```
 
 BETWEEN / NOT BETWEEN:
 ```php
-$db->where('id', Array (4, 20), 'BETWEEN');
-// or $db->where ('id', Array ('BETWEEN' => Array(4, 20)));
+$DBLIB->where('id', Array (4, 20), 'BETWEEN');
+// or $DBLIB->where ('id', Array ('BETWEEN' => Array(4, 20)));
 
-$results = $db->get('users');
+$results = $DBLIB->get('users');
 // Gives: SELECT * FROM users WHERE id BETWEEN 4 AND 20
 ```
 
 IN / NOT IN:
 ```php
-$db->where('id', Array(1, 5, 27, -1, 'd'), 'IN');
-// or $db->where('id', Array( 'IN' => Array(1, 5, 27, -1, 'd') ) );
+$DBLIB->where('id', Array(1, 5, 27, -1, 'd'), 'IN');
+// or $DBLIB->where('id', Array( 'IN' => Array(1, 5, 27, -1, 'd') ) );
 
-$results = $db->get('users');
+$results = $DBLIB->get('users');
 // Gives: SELECT * FROM users WHERE id IN (1, 5, 27, -1, 'd');
 ```
 
 OR CASE
 ```php
-$db->where ('firstName', 'John');
-$db->orWhere ('firstName', 'Peter');
-$results = $db->get ('users');
+$DBLIB->where ('firstName', 'John');
+$DBLIB->orWhere ('firstName', 'Peter');
+$results = $DBLIB->get ('users');
 // Gives: SELECT * FROM users WHERE firstName='John' OR firstName='peter'
 ```
 
 NULL comparison:
 ```php
-$db->where ("lastName", NULL, '<=>');
-$results = $db->get("users");
+$DBLIB->where ("lastName", NULL, '<=>');
+$results = $DBLIB->get("users");
 // Gives: SELECT * FROM users where lastName <=> NULL
 ```
 
 Also you can use raw where conditions:
 ```php
-$db->where ("id != companyId");
-$db->where ("DATE(createdAt) = DATE(lastLogin)");
-$results = $db->get("users");
+$DBLIB->where ("id != companyId");
+$DBLIB->where ("DATE(createdAt) = DATE(lastLogin)");
+$results = $DBLIB->get("users");
 ```
 
 Or raw condition with variables:
 ```php
-$db->where ("(id = ? or id = ?)", Array(6,2));
-$db->where ("login","mike")
-$res = $db->get ("users");
+$DBLIB->where ("(id = ? or id = ?)", Array(6,2));
+$DBLIB->where ("login","mike")
+$res = $DBLIB->get ("users");
 // Gives: SELECT * FROM users WHERE (id = 6 or id = 2) and login='mike';
 ```
 
@@ -346,38 +346,38 @@ Find the total number of rows matched. Simple pagination example:
 ```php
 $offset = 10;
 $count = 15;
-$users = $db->withTotalCount()->get('users', Array ($offset, $count));
-echo "Showing {$count} from {$db->totalCount}";
+$users = $DBLIB->withTotalCount()->get('users', Array ($offset, $count));
+echo "Showing {$count} from {$DBLIB->totalCount}";
 ```
 
 ### Query Keywords
 To add LOW PRIORITY | DELAYED | HIGH PRIORITY | IGNORE and the rest of the mysql keywords to INSERT (), REPLACE (), GET (), UPDATE (), DELETE() method or FOR UPDATE | LOCK IN SHARE MODE into SELECT ():
 ```php
-$db->setQueryOption ('LOW_PRIORITY')->insert ($table, $param);
+$DBLIB->setQueryOption ('LOW_PRIORITY')->insert ($table, $param);
 // GIVES: INSERT LOW_PRIORITY INTO table ...
 ```
 ```php
-$db->setQueryOption ('FOR UPDATE')->get ('users');
+$DBLIB->setQueryOption ('FOR UPDATE')->get ('users');
 // GIVES: SELECT * FROM USERS FOR UPDATE;
 ```
 
 Also you can use an array of keywords:
 ```php
-$db->setQueryOption (Array('LOW_PRIORITY', 'IGNORE'))->insert ($table,$param);
+$DBLIB->setQueryOption (Array('LOW_PRIORITY', 'IGNORE'))->insert ($table,$param);
 // GIVES: INSERT LOW_PRIORITY IGNORE INTO table ...
 ```
 
 Same way keywords could be used in SELECT queries as well:
 ```php
-$db->setQueryOption ('SQL_NO_CACHE');
-$db->get("users");
+$DBLIB->setQueryOption ('SQL_NO_CACHE');
+$DBLIB->get("users");
 // GIVES: SELECT SQL_NO_CACHE * FROM USERS;
 ```
 
 Optionally you can use method chaining to call where multiple times without referencing your object over an over:
 
 ```php
-$results = $db
+$results = $DBLIB
 	->where('id', 1)
 	->where('login', 'admin')
 	->get('users');
@@ -385,54 +385,54 @@ $results = $db
 
 ### Delete Query
 ```php
-$db->where('id', 1);
-if($db->delete('users')) echo 'successfully deleted';
+$DBLIB->where('id', 1);
+if($DBLIB->delete('users')) echo 'successfully deleted';
 ```
 
 
 ### Ordering method
 ```php
-$db->orderBy("id","asc");
-$db->orderBy("login","Desc");
-$db->orderBy("RAND ()");
-$results = $db->get('users');
+$DBLIB->orderBy("id","asc");
+$DBLIB->orderBy("login","Desc");
+$DBLIB->orderBy("RAND ()");
+$results = $DBLIB->get('users');
 // Gives: SELECT * FROM users ORDER BY id ASC,login DESC, RAND ();
 ```
 
 Order by values example:
 ```php
-$db->orderBy('userGroup', 'ASC', array('superuser', 'admin', 'users'));
-$db->get('users');
+$DBLIB->orderBy('userGroup', 'ASC', array('superuser', 'admin', 'users'));
+$DBLIB->get('users');
 // Gives: SELECT * FROM users ORDER BY FIELD (userGroup, 'superuser', 'admin', 'users') ASC;
 ```
 
 If you are using setPrefix () functionality and need to use table names in orderBy() method make sure that table names are escaped with ``.
 
 ```php
-$db->setPrefix ("t_");
-$db->orderBy ("users.id","asc");
-$results = $db->get ('users');
+$DBLIB->setPrefix ("t_");
+$DBLIB->orderBy ("users.id","asc");
+$results = $DBLIB->get ('users');
 // WRONG: That will give: SELECT * FROM t_users ORDER BY users.id ASC;
 
-$db->setPrefix ("t_");
-$db->orderBy ("`users`.id", "asc");
-$results = $db->get ('users');
+$DBLIB->setPrefix ("t_");
+$DBLIB->orderBy ("`users`.id", "asc");
+$results = $DBLIB->get ('users');
 // CORRECT: That will give: SELECT * FROM t_users ORDER BY t_users.id ASC;
 ```
 
 ### Grouping method
 ```php
-$db->groupBy ("name");
-$results = $db->get ('users');
+$DBLIB->groupBy ("name");
+$results = $DBLIB->get ('users');
 // Gives: SELECT * FROM users GROUP BY name;
 ```
 
 Join table products with table users with LEFT JOIN by tenantID
 ### JOIN method
 ```php
-$db->join("users u", "p.tenantID=u.tenantID", "LEFT");
-$db->where("u.id", 6);
-$products = $db->get ("products p", null, "u.name, p.productName");
+$DBLIB->join("users u", "p.tenantID=u.tenantID", "LEFT");
+$DBLIB->where("u.id", 6);
+$products = $DBLIB->get ("products p", null, "u.name, p.productName");
 print_r ($products);
 ```
 
@@ -440,14 +440,14 @@ print_r ($products);
 Its is also possible to copy properties
 
 ```php
-$db->where ("agentId", 10);
-$db->where ("active", true);
+$DBLIB->where ("agentId", 10);
+$DBLIB->where ("active", true);
 
-$customers = $db->copy ();
+$customers = $DBLIB->copy ();
 $res = $customers->get ("customers", Array (10, 10));
 // SELECT * FROM customers where agentId = 10 and active = 1 limit 10, 10
 
-$cnt = $db->getValue ("customers", "count(id)");
+$cnt = $DBLIB->getValue ("customers", "count(id)");
 echo "total records found: " . $cnt;
 // SELECT count(id) FROM users where agentId = 10 and active = 1
 ```
@@ -457,70 +457,70 @@ Subquery init
 
 Subquery init without an alias to use in inserts/updates/where Eg. (select * from users)
 ```php
-$sq = $db->subQuery();
+$sq = $DBLIB->subQuery();
 $sq->get ("users");
 ```
  
 A subquery with an alias specified to use in JOINs . Eg. (select * from users) sq
 ```php
-$sq = $db->subQuery("sq");
+$sq = $DBLIB->subQuery("sq");
 $sq->get ("users");
 ```
 
 Subquery in selects:
 ```php
-$ids = $db->subQuery ();
+$ids = $DBLIB->subQuery ();
 $ids->where ("qty", 2, ">");
 $ids->get ("products", null, "userId");
 
-$db->where ("id", $ids, 'in');
-$res = $db->get ("users");
+$DBLIB->where ("id", $ids, 'in');
+$res = $DBLIB->get ("users");
 // Gives SELECT * FROM users WHERE id IN (SELECT userId FROM products WHERE qty > 2)
 ```
 
 Subquery in inserts:
 ```php
-$userIdQ = $db->subQuery ();
+$userIdQ = $DBLIB->subQuery ();
 $userIdQ->where ("id", 6);
 $userIdQ->getOne ("users", "name"),
 
 $data = Array (
     "productName" => "test product",
     "userId" => $userIdQ,
-    "lastUpdated" => $db->now()
+    "lastUpdated" => $DBLIB->now()
 );
-$id = $db->insert ("products", $data);
+$id = $DBLIB->insert ("products", $data);
 // Gives INSERT INTO PRODUCTS (productName, userId, lastUpdated) values ("test product", (SELECT name FROM users WHERE id = 6), NOW());
 ```
 
 Subquery in joins:
 ```php
-$usersQ = $db->subQuery ("u");
+$usersQ = $DBLIB->subQuery ("u");
 $usersQ->where ("active", 1);
 $usersQ->get ("users");
 
-$db->join($usersQ, "p.userId=u.id", "LEFT");
-$products = $db->get ("products p", null, "u.login, p.productName");
+$DBLIB->join($usersQ, "p.userId=u.id", "LEFT");
+$products = $DBLIB->get ("products p", null, "u.login, p.productName");
 print_r ($products);
 // SELECT u.login, p.productName FROM products p LEFT JOIN (SELECT * FROM t_users WHERE active = 1) u on p.userId=u.id;
 ```
 
 ###EXISTS / NOT EXISTS condition
 ```php
-$sub = $db->subQuery();
+$sub = $DBLIB->subQuery();
     $sub->where("company", 'testCompany');
     $sub->get ("users", null, 'userId');
-$db->where (null, $sub, 'exists');
-$products = $db->get ("products");
+$DBLIB->where (null, $sub, 'exists');
+$products = $DBLIB->get ("products");
 // Gives SELECT * FROM products WHERE EXISTS (select userId from users where company='testCompany')
 ```
 
 ### Has method
 A convenient function that returns TRUE if exists at least an element that satisfy the where condition specified calling the "where" method before this one.
 ```php
-$db->where("user", $user);
-$db->where("password", md5($password));
-if($db->has("users")) {
+$DBLIB->where("user", $user);
+$DBLIB->where("password", md5($password));
+if($DBLIB->has("users")) {
     return "You are logged";
 } else {
     return "Wrong user/password";
@@ -529,46 +529,46 @@ if($db->has("users")) {
 ### Helper commands
 Reconnect in case mysql connection died:
 ```php
-if (!$db->ping())
-    $db->connect()
+if (!$DBLIB->ping())
+    $DBLIB->connect()
 ```
 
 Get last executed SQL query:
 Please note that function returns SQL query only for debugging purposes as its execution most likely will fail due missing quotes around char variables.
 ```php
-    $db->get('users');
-    echo "Last executed query was ". $db->getLastQuery();
+    $DBLIB->get('users');
+    echo "Last executed query was ". $DBLIB->getLastQuery();
 ```
 
 Check if table exists:
 ```php
-    if ($db->tableExists ('users'))
+    if ($DBLIB->tableExists ('users'))
         echo "hooray";
 ```
 ### Transaction helpers
 Please keep in mind that transactions are working on innoDB tables.
 Rollback transaction if insert fails:
 ```php
-$db->startTransaction();
+$DBLIB->startTransaction();
 ...
-if (!$db->insert ('myTable', $insertData)) {
+if (!$DBLIB->insert ('myTable', $insertData)) {
     //Error while saving, cancel new record
-    $db->rollback();
+    $DBLIB->rollback();
 } else {
     //OK
-    $db->commit();
+    $DBLIB->commit();
 }
 ```
 
 ### Query exectution time benchmarking
 To track query execution time setTrace() function should be called.
 ```php
-$db->setTrace (true);
+$DBLIB->setTrace (true);
 // As a second parameter it is possible to define prefix of the path which should be striped from filename
-// $db->setTrace (true, $_SERVER['SERVER_ROOT']);
-$db->get("users");
-$db->get("test");
-print_r ($db->trace);
+// $DBLIB->setTrace (true, $_SERVER['SERVER_ROOT']);
+$DBLIB->get("users");
+$DBLIB->get("test");
+print_r ($DBLIB->trace);
 ```
 
 ```
